@@ -1,0 +1,17 @@
+benchmarks:
+  - name: gsm8k
+    dataset: gsm8k@cc7b047b6e5bb11b4f1af84efc572db110a51b3c
+    split: test
+    fields:
+      question: question
+      answer: answer
+    prompt_template: collate_fn_gsm8k
+    metric: accuracy
+  - name: competition_math
+    dataset: chiayewken/competition_math@7da8b2761bb4544ac0fc81a43531e4f26d2ddb51
+    split: test
+    fields:
+      problem: problem
+      solution: solution
+    prompt_template: collate_fn_math
+    metric: accuracy

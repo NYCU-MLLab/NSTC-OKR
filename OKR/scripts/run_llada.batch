@@ -1,0 +1,58 @@
+#!/bin/bash
+#SBATCH -A MST114566
+#SBATCH -J llada_gsm8k
+#SBATCH -p normal
+#SBATCH --nodes=1
+#SBATCH --gres=gpu:2
+#SBATCH --cpus-per-task=24
+#SBATCH --time=20:00:00
+#SBATCH -o OKR/results/llada_baseline_gsm8k/generate_predictions/llada_gsm8k.out
+#SBATCH -e OKR/results/llada_baseline_gsm8k/generate_predictions/llada_gsm8k.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=tom.ee13@nycu.edu.tw
+
+module purge
+module load miniconda3/24.11.1
+
+cd /work/tom900908/project
+conda activate yitang
+
+export REOAC_MODEL_ROOT="/work/tom900908/project/models"
+export HF_HOME="${REOAC_MODEL_ROOT}/hf"
+export HF_HUB_CACHE="${HF_HOME}/hub"
+export TRANSFORMERS_CACHE="${HF_HOME}/transformers"
+export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+mkdir -p "$REOAC_MODEL_ROOT" "$HF_HOME" "$HF_HUB_CACHE" "$TRANSFORMERS_CACHE" "$HF_DATASETS_CACHE"
+
+export NCCL_ASYNC_ERROR_HANDLING=1
+export NCCL_BLOCKING_WAIT=1
+export NCCL_TIMEOUT=1200
+
+echo "Python Path: $(which python)"
+echo "Python Version: $(python -V)"
+if command -v nvcc >/dev/null 2>&1; then
+  echo "CUDA Version: $(nvcc --version | grep release)"
+else
+  echo "CUDA Version: nvcc not found"
+fi
+
+export PROC_PER_NODES=2
+
+torchrun \
+  --standalone \
+  --nproc-per-node=$PROC_PER_NODES \
+  --master-port=23443 \
+  OKR/scripts/run_llada_gsm8k.py \
+    --ckpt_path models/LLaDA-8B-Instruct \
+    --local_data_path datasets/gsm8k \
+    --split test \
+    --num_workers 4 \
+    --seed 112 \
+    --steps 256 \
+    --gen_length 256 \
+    --block_length 8 \
+    --no_sample True \
+    --remasking low_confidence \
+    --output OKR/results/llada_baseline_gsm8k/predictions.jsonl \
+    --prompts_output OKR/results/llada_baseline_gsm8k/prompts.jsonl \
+    --keep_shards false

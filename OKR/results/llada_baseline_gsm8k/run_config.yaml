@@ -1,0 +1,33 @@
+# From scripts/eval_math.sh + metrics/math_metrics.py defaults
+run_cmd: >-
+  torchrun --standalone --nproc-per-node=2 --master-port=23443 metrics/math_llada.py
+  --ckpt_path models/LLaDA-8B-Instruct --local_data_path datasets/gsm8k --num_workers 4 --seed 112
+  --steps 256 --gen_length 256 --block_length 8 --no_sample True --remasking low_confidence
+
+model_name_or_path: models/LLaDA-8B-Instruct
+code_git_commit: TODO
+
+dataset: gsm8k@cc7b047b6e5bb11b4f1af84efc572db110a51b3c
+local_data_path: datasets/gsm8k
+split: test
+seed: 112
+
+distributed:
+  backend: nccl
+  nproc_per_node: 2
+  master_port: 23443
+
+dataloader:
+  batch_size: 1
+  num_workers: 4
+  sampler: DistributedSampler
+  shuffle: false
+  pin_memory: true
+
+prompt_template: collate_fn_gsm8k
+
+gen_params:
+  steps: 256
+  gen_length: 256
+  block_length: 8
+  no_sample: true

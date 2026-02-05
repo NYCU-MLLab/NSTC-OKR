@@ -1,0 +1,38 @@
+# From scripts/eval_baseline_math.sh + metrics/math_llada.py defaults
+run_cmd: >-
+  torchrun --standalone --nproc-per-node=2 --master-port=23443 metrics/math_llada.py
+  --ckpt_path models/LLaDA-8B-Instruct --local_data_path datasets/MATH --num_workers 4 --seed 112
+  --steps 256 --gen_length 256 --block_length 8 --no_sample True --remasking low_confidence
+
+model_name_or_path: models/LLaDA-8B-Instruct
+code_git_commit: TODO
+
+dataset: chiayewken/competition_math@7da8b2761bb4544ac0fc81a43531e4f26d2ddb51
+local_data_path: datasets/MATH
+split: test
+seed: 112
+
+distributed:
+  backend: nccl
+  nproc_per_node: 2
+  master_port: 23443
+
+dataloader:
+  batch_size: 1
+  num_workers: 4
+  sampler: DistributedSampler
+  shuffle: false
+  pin_memory: true
+
+prompt_template: collate_fn_math
+
+gen_params:
+  steps: 256
+  gen_length: 256
+  block_length: 8
+  no_sample: true
+  temperature: 1.0
+  cfg_scale: 0.0
+  remasking: low_confidence
+  logits_eos_inf: false
+  confidence_eos_eot_inf: false
